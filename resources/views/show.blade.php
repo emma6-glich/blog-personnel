@@ -28,6 +28,7 @@
                     </li>
                 @else
                     <li><a href="/login" class="hover:underline">Connexion</a></li>
+                    <li><a href="/register" class="hover:underline">S'inscrire</a></li>
                 @endauth
             </ul>
         </div>
@@ -180,11 +181,6 @@
                             <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
                                 @csrf
                                 <input type="hidden" name="parent_id" value="{{ $comment->id }}">
-                                
-                                <div>
-                                    <input type="text" name="pseudo" placeholder="Votre Pseudo (ex: L'Auteur)" required 
-                                           class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none">
-                                </div>
                                 <div>
                                     <textarea name="content" rows="2" placeholder="Votre réponse..." required 
                                               class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none"></textarea>
@@ -237,11 +233,6 @@
                     <h4 class="text-lg font-semibold text-blue-900 mb-4">Laisser un commentaire</h4>
                     <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-4">
                         @csrf
-                        <div>
-                            <label for="pseudo" class="block text-xs font-bold text-blue-900 uppercase mb-1">Votre Pseudo / Nom</label>
-                            <input type="text" id="pseudo" name="pseudo" value="{{ auth()->user()->name }}" required
-                                   class="w-full px-3 py-2 bg-white border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                        </div>
                         <div>
                             <label for="content" class="block text-xs font-bold text-blue-900 uppercase mb-1">Votre Commentaire</label>
                             <textarea id="content" name="content" rows="4" placeholder="Donnez votre avis sur cet article..." required

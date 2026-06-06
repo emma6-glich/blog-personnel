@@ -16,3 +16,12 @@
         </div>
     </div>
 @endif
+
+<script>
+    setTimeout(function() {
+        var success = document.getElementById('flash-success');
+        var error = document.getElementById('flash-error');
+        if (success) success.remove();
+        if (error) error.remove();
+    }, 3000);
+</script>

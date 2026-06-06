@@ -47,6 +47,11 @@
                             Connexion
                         </a>
                     </li>
+                    <li>
+                        <a href="/register" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            S'inscrire
+                        </a>
+                    </li>
                 @endauth
             </ul>
         </div>

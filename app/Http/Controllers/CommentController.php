@@ -12,7 +12,6 @@ class CommentController extends Controller
     public function store(Request $request, $slug)
     {
         $request->validate([
-            'pseudo'  => 'required|max:100',
             'content' => 'required|min:3|max:1000',
         ]);
 
@@ -22,7 +21,7 @@ class CommentController extends Controller
             'post_id'   => $post->id,
             'parent_id' => $request->parent_id,
             'user_id'   => Auth::id(),
-            'pseudo'    => $request->pseudo,
+            'pseudo'    => Auth::user()->name, // Nom automatique
             'content'   => $request->content,
         ]);
 
