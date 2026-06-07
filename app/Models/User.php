@@ -22,6 +22,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+        'bio',
     ];
 
     /**
@@ -51,5 +53,17 @@ class User extends Authenticatable
     public function posts()
     {
         return $this->hasMany(Post::class);
+    }
+
+    // Un utilisateur peut avoir plusieurs commentaires
+    public function comments()
+    {
+        return $this->hasMany(\App\Models\Comment::class);
+    }
+
+    // Un utilisateur peut avoir plusieurs réactions
+    public function reactions()
+    {
+        return $this->hasMany(\App\Models\Reaction::class);
     }
 }

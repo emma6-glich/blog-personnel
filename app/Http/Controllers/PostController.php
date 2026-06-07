@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Category;
 use App\Models\PostView;
+use App\Models\User;
+use App\Notifications\NewArticleNotification;
+use App\Notifications\ArticleDeletedNotification;
+use App\Notifications\ArticleUpdatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -83,17 +87,23 @@ class PostController extends Controller
             'image'       => $imagePath,
         ]);
 
+        // Notifier tous les utilisateurs sauf l'admin
+        $post = Post::where('slug', $slug)->first();
+        $users = User::where('id', '!=', Auth::id())->get();
+        foreach ($users as $user) {
+            $user->notify(new NewArticleNotification($post));
+        }
+
         return redirect('/')->with('success', 'Article publié avec succès !');
     }
 
     // Afficher un article spécifique
-    public function show($slug)
+    public function show(Request $request, $slug)
     {
         $post = Post::where('slug', $slug)->firstOrFail();
 
         $ip = request()->ip();
 
-        // On enregistre la vue uniquement si cette IP n'a jamais vu cet article
         $alreadyViewed = PostView::where('post_id', $post->id)
                                   ->where('ip_address', $ip)
                                   ->exists();
@@ -103,7 +113,15 @@ class PostController extends Controller
             $post->increment('views');
         }
 
-        return view('show', compact('post'));
+        // Tri des commentaires
+        $sort = $request->get('sort', 'asc');
+        $comments = $post->comments()
+                         ->whereNull('parent_id')
+                         ->with(['replies.likes', 'likes', 'user'])
+                         ->orderBy('created_at', $sort)
+                         ->get();
+
+        return view('show', compact('post', 'comments', 'sort'));
     }
 
     // Afficher le formulaire de modification
@@ -168,6 +186,12 @@ class PostController extends Controller
             'image'       => $imagePath,
         ]);
 
+        // Notifier tous les utilisateurs sauf l'admin
+        $users = User::where('id', '!=', Auth::id())->get();
+        foreach ($users as $user) {
+            $user->notify(new ArticleUpdatedNotification($post));
+        }
+
         return redirect('/articles/' . $post->slug)->with('success', 'Article modifié avec succès !');
     }
 
@@ -180,12 +204,20 @@ class PostController extends Controller
             return redirect('/')->with('error', 'Action non autorisée.');
         }
 
+        $title = $post->title;
+
         // Supprimer l'image associée
         if ($post->image) {
             \Storage::disk('public')->delete($post->image);
         }
 
         $post->delete();
+
+        // Notifier tous les utilisateurs
+        $users = User::where('id', '!=', Auth::id())->get();
+        foreach ($users as $user) {
+            $user->notify(new ArticleDeletedNotification($title));
+        }
 
         return redirect('/')->with('success', 'Article supprimé.');
     }

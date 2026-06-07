@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Blog Personnel</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('notif-dropdown-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('notif-dropdown')?.classList.add('hidden');
+            }
+        });
+    </script>
     <style>
         .hero-gradient { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%); }
         .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -33,23 +41,57 @@
                             </a>
                         </li>
                     @endif
+                    <li><a href="/dashboard" class="text-gray-600 hover:text-blue-600 transition">Dashboard</a></li>
                     <li>
-                        <form action="/logout" method="POST">
-                            @csrf
-                            <button type="submit" class="text-gray-600 hover:text-red-500 transition cursor-pointer">
-                                Déconnexion
+                        <div class="relative" id="notif-dropdown-wrapper">
+                            <button onclick="document.getElementById('notif-dropdown').classList.toggle('hidden')"
+                                class="relative text-gray-600 hover:text-blue-600 transition cursor-pointer flex items-center gap-1">
+                                🔔
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                        {{ auth()->user()->unreadNotifications->count() > 9 ? '9+' : auth()->user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
                             </button>
-                        </form>
+
+                            {{-- Dropdown notifications --}}
+                            <div id="notif-dropdown" class="hidden absolute right-0 top-8 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+                                <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                                    <span class="font-semibold text-sm text-gray-800">Notifications</span>
+                                    <a href="/notifications" class="text-xs text-blue-600 hover:underline">Voir tout</a>
+                                </div>
+                                <div class="max-h-72 overflow-y-auto">
+                                    @forelse(auth()->user()->notifications()->take(5)->get() as $notif)
+                                        <a href="{{ $notif->data['url'] ?? '/' }}"
+                                            class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 {{ $notif->read_at ? '' : 'bg-blue-50' }}">
+                                            <p class="text-xs {{ $notif->read_at ? 'text-gray-600' : 'text-blue-800 font-semibold' }}">
+                                                {{ $notif->data['message'] }}
+                                            </p>
+                                            <p class="text-[10px] text-gray-400 mt-0.5">{{ $notif->created_at->diffForHumans() }}</p>
+                                        </a>
+                                    @empty
+                                        <p class="text-center text-sm text-gray-400 py-6">Aucune notification</p>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/profil" class="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
+                            @if(auth()->user()->avatar)
+                                <img src="{{ asset('storage/' . auth()->user()->avatar) }}" class="w-7 h-7 rounded-full object-cover">
+                            @else
+                                <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                </div>
+                            @endif
+                            {{ auth()->user()->name }}
+                        </a>
                     </li>
                 @else
                     <li>
                         <a href="/login" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-semibold">
                             Connexion
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/register" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
-                            S'inscrire
                         </a>
                     </li>
                 @endauth

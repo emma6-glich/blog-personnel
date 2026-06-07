@@ -17,19 +17,13 @@
                     @if(auth()->user()->email === env('ADMIN_EMAIL'))
                         <li><a href="/articles/create" class="hover:underline">Écrire un article</a></li>
                     @endif
+                    <li><a href="/dashboard" class="hover:underline">Dashboard</a></li>
+                    <li><a href="/profil" class="hover:underline font-semibold">{{ auth()->user()->name }}</a></li>
                 @endauth
                 <li><a href="/a-propos" class="hover:underline">À propos</a></li>
-                @auth
-                    <li>
-                        <form action="/logout" method="POST">
-                            @csrf
-                            <button type="submit" class="hover:underline cursor-pointer">Déconnexion</button>
-                        </form>
-                    </li>
-                @else
+                @guest
                     <li><a href="/login" class="hover:underline">Connexion</a></li>
-                    <li><a href="/register" class="hover:underline">S'inscrire</a></li>
-                @endauth
+                @endguest
             </ul>
         </div>
     </nav>

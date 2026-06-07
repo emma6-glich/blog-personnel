@@ -26,7 +26,6 @@
                     </li>
                 @else
                     <li><a href="/login" class="hover:underline">Connexion</a></li>
-                    <li><a href="/register" class="hover:underline">S'inscrire</a></li>
                 @endauth
             </ul>
         </div>

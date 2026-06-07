@@ -25,4 +25,10 @@ class Comment extends Model
     {
         return $this->belongsTo(Post::class);
     }
+
+    // Un commentaire peut avoir plusieurs likes
+    public function likes()
+    {
+        return $this->hasMany(CommentLike::class);
+    }
 }
