@@ -35,6 +35,7 @@ Route::get('/articles/{slug}', [PostController::class, 'show'])->name('posts.sho
 Route::get('/api/users/search', function(\Illuminate\Http\Request $request) {
     $query = $request->get('q', '');
     $users = \App\Models\User::where('name', 'like', $query . '%')
+                ->where('id', '!=', auth()->id()) // Exclure l'utilisateur connecté
                 ->select('id', 'name')
                 ->take(5)
                 ->get();
