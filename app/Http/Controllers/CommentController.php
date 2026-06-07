@@ -44,21 +44,19 @@ class CommentController extends Controller
         return redirect('/articles/' . $post->slug)->with('success', 'Commentaire publié !');
     }
 
-    // Modifier un commentaire (auteur ou admin)
+    // Modifier un commentaire (auteur seulement)
     public function update(Request $request, $id)
     {
         $comment = Comment::findOrFail($id);
 
-        // Seul l'auteur ou l'admin peut modifier
-        if (Auth::id() !== $comment->user_id && Auth::user()->email !== env('ADMIN_EMAIL')) {
+        // Seul l'auteur peut modifier (pas l'admin)
+        if (Auth::id() !== $comment->user_id) {
             return redirect('/')->with('error', 'Action non autorisée.');
         }
 
-        // Limite de 10 minutes pour modifier (sauf admin)
-        if (Auth::user()->email !== env('ADMIN_EMAIL')) {
-            if ($comment->created_at->diffInMinutes(now()) > 10) {
-                return back()->with('error', 'Vous ne pouvez plus modifier ce commentaire (délai de 10 minutes dépassé).');
-            }
+        // Limite de 10 minutes
+        if ($comment->created_at->diffInMinutes(now()) > 10) {
+            return back()->with('error', 'Vous ne pouvez plus modifier ce commentaire (délai de 10 minutes dépassé).');
         }
 
         $request->validate([

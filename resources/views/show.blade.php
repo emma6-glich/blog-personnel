@@ -133,7 +133,7 @@
                                 <span class="text-xs text-gray-400">Le {{ $comment->created_at->format('d/m/Y à H:i') }}</span>
                                 @auth
                                     @if(auth()->id() === $comment->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
-                                        @if(auth()->user()->email === env('ADMIN_EMAIL') || $comment->created_at->diffInMinutes(now()) <= 10)
+                                        @if(auth()->id() === $comment->user_id && $comment->created_at->diffInMinutes(now()) <= 10)
                                             <button onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.toggle('hidden')"
                                                 class="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer">Modifier</button>
                                         @endif
@@ -166,7 +166,7 @@
 
                         {{-- Formulaire modifier --}}
                         @auth
-                            @if(auth()->id() === $comment->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
+                            @if(auth()->id() === $comment->user_id && auth()->user()->email !== env('ADMIN_EMAIL'))
                                 <div id="edit-comment-{{ $comment->id }}" class="hidden mb-4">
                                     <form action="/comments/{{ $comment->id }}" method="POST">
                                         @csrf @method('PUT')
@@ -191,8 +191,13 @@
                             <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
                                 @csrf
                                 <input type="hidden" name="parent_id" value="{{ $comment->id }}">
-                                <textarea name="content" rows="2" placeholder="@{{ $comment->pseudo }} " required
-                                    class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none"></textarea>
+                                <div class="relative">
+                                    <textarea name="content" rows="2" id="reply-{{ $comment->id }}"
+                                        placeholder="@{{ $comment->pseudo }} " required
+                                        class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none"
+                                        oninput="handleMention(this, 'suggest-{{ $comment->id }}')"></textarea>
+                                    <div id="suggest-{{ $comment->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
+                                </div>
                                 <p class="text-[10px] text-gray-400">Tape @nom pour tagger quelqu'un</p>
                                 <div class="flex justify-end">
                                     <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-blue-700 transition cursor-pointer">Répondre</button>
@@ -275,6 +280,45 @@
     <footer class="bg-gray-900 text-gray-400 text-center py-6 mt-20 border-t border-gray-800">
         <p>&copy; 2026 Mon Blog Personnel - Tous droits réservés.</p>
     </footer>
+
+    <script>
+    function handleMention(textarea, suggestId) {
+        const value = textarea.value;
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = value.substring(0, cursorPos);
+        const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+        const suggest = document.getElementById(suggestId);
+
+        if (mentionMatch) {
+            const query = mentionMatch[1];
+            if (query.length === 0) { suggest.classList.add('hidden'); return; }
+
+            fetch('/api/users/search?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(users => {
+                    if (users.length === 0) { suggest.classList.add('hidden'); return; }
+                    suggest.innerHTML = users.map(u =>
+                        `<div class="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer" onclick="insertMention('${suggestId}', '${u.name}', this)">${u.name}</div>`
+                    ).join('');
+                    suggest.classList.remove('hidden');
+                });
+        } else {
+            suggest.classList.add('hidden');
+        }
+    }
+
+    function insertMention(suggestId, name, el) {
+        const suggest = document.getElementById(suggestId);
+        const textarea = suggest.previousElementSibling;
+        const value = textarea.value;
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = value.substring(0, cursorPos);
+        const newText = textBeforeCursor.replace(/@\w*$/, '@' + name + ' ') + value.substring(cursorPos);
+        textarea.value = newText;
+        suggest.classList.add('hidden');
+        textarea.focus();
+    }
+    </script>
 
 </body>
 </html>

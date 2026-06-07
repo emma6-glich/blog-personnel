@@ -104,12 +104,20 @@ class PostController extends Controller
 
         $ip = request()->ip();
 
+        // Pour les utilisateurs connectés, on utilise leur ID. Pour les visiteurs, l'IP
         $alreadyViewed = PostView::where('post_id', $post->id)
-                                  ->where('ip_address', $ip)
+                                  ->where(function($q) use ($ip) {
+                                      if (auth()->check()) {
+                                          $q->where('ip_address', 'user_' . auth()->id());
+                                      } else {
+                                          $q->where('ip_address', $ip);
+                                      }
+                                  })
                                   ->exists();
 
         if (!$alreadyViewed) {
-            PostView::create(['post_id' => $post->id, 'ip_address' => $ip]);
+            $identifier = auth()->check() ? 'user_' . auth()->id() : $ip;
+            PostView::create(['post_id' => $post->id, 'ip_address' => $identifier]);
             $post->increment('views');
         }
 

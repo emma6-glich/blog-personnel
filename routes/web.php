@@ -31,11 +31,21 @@ Route::get('/articles/create', [PostController::class, 'create'])->name('posts.c
 // Voir un article spécifique avec ses commentaires
 Route::get('/articles/{slug}', [PostController::class, 'show'])->name('posts.show');
 
-// Ajouter un commentaire (connecté uniquement)
-Route::post('/articles/{slug}/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth');
+// Recherche utilisateurs pour le tag @
+Route::get('/api/users/search', function(\Illuminate\Http\Request $request) {
+    $query = $request->get('q', '');
+    $users = \App\Models\User::where('name', 'like', $query . '%')
+                ->select('id', 'name')
+                ->take(5)
+                ->get();
+    return response()->json($users);
+})->middleware('auth');
 
 // Réactions (connecté uniquement)
 Route::post('/articles/{slug}/reactions', [ReactionController::class, 'store'])->name('reactions.store')->middleware('auth');
+
+// Ajouter un commentaire (connecté uniquement)
+Route::post('/articles/{slug}/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('auth');
 
 // Liker un commentaire
 Route::post('/comments/{id}/like', [CommentLikeController::class, 'toggle'])->name('comments.like')->middleware('auth');
