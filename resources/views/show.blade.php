@@ -237,6 +237,28 @@
                                                     👍 {{ $reply->likes->count() > 0 ? $reply->likes->count() : '' }}
                                                 </button>
                                             </form>
+
+                                            {{-- Répondre à une réponse --}}
+                                            <button onclick="document.getElementById('reply-to-reply-{{ $reply->id }}').classList.toggle('hidden')"
+                                                class="text-[10px] text-blue-500 hover:text-blue-700 cursor-pointer ml-2">
+                                                Répondre
+                                            </button>
+                                            <div id="reply-to-reply-{{ $reply->id }}" class="hidden mt-2">
+                                                <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
+                                                    @csrf
+                                                    <input type="hidden" name="parent_id" value="{{ $comment->id }}">
+                                                    <div class="relative">
+                                                        <textarea name="content" rows="2" id="rr-{{ $reply->id }}"
+                                                            placeholder="@{{ $reply->pseudo }} " required
+                                                            class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-[10px] focus:outline-none"
+                                                            oninput="handleMention(this, 'suggest-rr-{{ $reply->id }}')"></textarea>
+                                                        <div id="suggest-rr-{{ $reply->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
+                                                    </div>
+                                                    <div class="flex justify-end">
+                                                        <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-blue-700 cursor-pointer">Envoyer</button>
+                                                    </div>
+                                                </form>
+                                            </div>
                                         @endauth
                                     </div>
                                 @endforeach
