@@ -168,7 +168,7 @@
             @forelse($posts as $post)
                 <article class="bg-white rounded-2xl shadow-sm border border-gray-200 card-hover overflow-hidden flex flex-col">
                     @if($post->image)
-                        <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="w-full h-44 object-cover">
+                        <img src="{{ Str::startsWith($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="w-full h-44 object-cover">
                     @else
                         <div class="w-full h-44 bg-gradient-to-br from-blue-400 to-blue-600"></div>
                     @endif

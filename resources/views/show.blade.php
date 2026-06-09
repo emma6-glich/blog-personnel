@@ -62,7 +62,7 @@
             </div>
 
             @if($post->image)
-                <img src="{{ asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="w-full h-72 object-cover rounded-xl mt-8 border border-gray-200">
+                <img src="{{ Str::startsWith($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="w-full h-72 object-cover rounded-xl mt-8 border border-gray-200">
             @endif
 
             <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-4">
