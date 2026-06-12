@@ -6,31 +6,13 @@
     <title>Modifier l'article - Mon Blog</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
-    <nav class="bg-blue-600 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">Mon Blog Personnel</h1>
-            <ul class="flex space-x-6 font-medium items-center">
-                <li><a href="/" class="hover:underline">Accueil</a></li>
-                @auth
-                    @if(auth()->user()->email === env('ADMIN_EMAIL'))
-                        <li><a href="/articles/create" class="hover:underline">Écrire un article</a></li>
-                    @endif
-                    <li><a href="/dashboard" class="hover:underline">Dashboard</a></li>
-                    <li><a href="/profil" class="hover:underline font-semibold">{{ auth()->user()->name }}</a></li>
-                @endauth
-                <li><a href="/a-propos" class="hover:underline">À propos</a></li>
-                @guest
-                    <li><a href="/login" class="hover:underline">Connexion</a></li>
-                @endguest
-            </ul>
-        </div>
-    </nav>
+    <x-navbar />
 
     <x-flash-messages />
 
-    <main class="container mx-auto my-10 px-4 max-w-2xl bg-white p-8 rounded-xl shadow-md border border-gray-200">
+    <main class="container mx-auto my-10 px-4 max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200">
         <div class="mb-6">
             <a href="/articles/{{ $post->slug }}" class="text-blue-600 hover:underline font-medium">&larr; Retour à l'article</a>
         </div>

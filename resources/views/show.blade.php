@@ -6,38 +6,13 @@
     <title>{{ $post->title }} - Mon Blog</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
-    <nav class="bg-blue-600 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">Mon Blog Personnel</h1>
-            <ul class="flex space-x-6 font-medium items-center">
-                <li><a href="/" class="hover:underline">Accueil</a></li>
-                @auth
-                    @if(auth()->user()->email === env('ADMIN_EMAIL'))
-                        <li><a href="/articles/create" class="hover:underline">Écrire un article</a></li>
-                    @endif
-                    <li><a href="/notifications" class="relative hover:underline">
-                        🔔
-                        @if(auth()->user()->unreadNotifications->count() > 0)
-                            <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                                {{ auth()->user()->unreadNotifications->count() }}
-                            </span>
-                        @endif
-                    </a></li>
-                    <li><a href="/profil" class="hover:underline font-semibold">{{ auth()->user()->name }}</a></li>
-                    <li><a href="/dashboard" class="hover:underline">Dashboard</a></li>
-                @else
-                    <li><a href="/login" class="hover:underline">Connexion</a></li>
-                @endauth
-                <li><a href="/a-propos" class="hover:underline">À propos</a></li>
-            </ul>
-        </div>
-    </nav>
+    <x-navbar />
 
     <x-flash-messages />
 
-    <main class="container mx-auto my-10 px-4 max-w-3xl bg-white p-8 rounded-xl shadow-md border border-gray-200">
+    <main class="container mx-auto my-6 md:my-10 px-4 max-w-3xl bg-white p-5 md:p-8 rounded-xl shadow-md border border-gray-200">
         <div class="mb-4">
             <a href="/" class="text-blue-600 hover:underline font-medium">&larr; Retour aux articles</a>
         </div>

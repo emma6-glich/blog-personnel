@@ -6,24 +6,14 @@
     <title>Créer un Article - Mon Blog</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans overflow-x-hidden">
 
-    <!-- Barre de navigation -->
-    <nav class="bg-blue-600 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">Mon Blog Personnel</h1>
-            <ul class="flex space-x-6 font-medium">
-                <li><a href="/" class="hover:underline">Accueil</a></li>
-                <li><a href="#" class="hover:underline">Articles</a></li>
-                <li><a href="/a-propos" class="hover:underline">À propos</a></li>
-            </ul>
-        </div>
-    </nav>
+    <x-navbar />
 
     <x-flash-messages />
 
     <!-- Formulaire de création -->
-    <main class="container mx-auto my-10 px-4 max-w-2xl bg-white p-8 rounded-xl shadow-md border border-gray-200">
+    <main class="container mx-auto my-10 px-4 max-w-2xl bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200">
         <h2 class="text-3xl font-extrabold text-gray-900 mb-6 border-b-2 border-blue-500 pb-2">
             Nouvel Article
         </h2>
