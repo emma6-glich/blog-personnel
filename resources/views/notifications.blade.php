@@ -8,21 +8,7 @@
 </head>
 <body class="bg-gray-50 font-sans">
 
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center max-w-6xl">
-            <a href="/" class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">B</span>
-                </div>
-                <span class="text-xl font-bold text-gray-900">Mon Blog</span>
-            </a>
-            <ul class="flex items-center gap-6 font-medium text-sm">
-                <li><a href="/" class="text-gray-600 hover:text-blue-600 transition">Accueil</a></li>
-                <li><a href="/dashboard" class="text-gray-600 hover:text-blue-600 transition">Dashboard</a></li>
-                <li><a href="/profil" class="text-gray-600 hover:text-blue-600 transition">Mon Profil</a></li>
-            </ul>
-        </div>
-    </nav>
+    <x-navbar />
 
     <x-flash-messages />
 
