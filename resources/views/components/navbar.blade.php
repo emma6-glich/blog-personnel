@@ -1,21 +1,32 @@
-<nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-6xl" style="padding-left:1rem;padding-right:1rem;">
-        <a href="/" class="flex items-center gap-2">
-            <div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+<style>
+    .nav-desktop { display: flex; }
+    .nav-hamburger { display: none; }
+    .nav-mobile { display: none; }
+    @media (max-width: 767px) {
+        .nav-desktop { display: none !important; }
+        .nav-hamburger { display: block !important; }
+    }
+</style>
+
+<nav style="background:white;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    <div style="max-width:1152px;margin:0 auto;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+        
+        <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+            <div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <span style="color:white;font-weight:bold;font-size:14px;">B</span>
             </div>
             <span style="font-size:20px;font-weight:bold;color:#111827;">Mon Blog</span>
         </a>
 
-        {{-- Hamburger visible seulement sur mobile --}}
-        <button id="hamburger-btn" onclick="toggleMenu()" style="display:none;background:none;border:none;cursor:pointer;padding:4px;">
+        {{-- Hamburger --}}
+        <button class="nav-hamburger" onclick="var m=document.getElementById('nav-mob');m.style.display=m.style.display==='block'?'none':'block';" style="background:none;border:none;cursor:pointer;padding:4px;">
             <svg width="24" height="24" fill="none" stroke="#374151" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
         </button>
 
         {{-- Menu desktop --}}
-        <ul id="desktop-menu" class="flex items-center gap-6 font-medium text-sm" style="list-style:none;margin:0;padding:0;">
+        <ul class="nav-desktop" style="list-style:none;margin:0;padding:0;align-items:center;gap:24px;font-size:14px;font-weight:500;">
             <li><a href="/" style="color:#4b5563;text-decoration:none;">Accueil</a></li>
             <li><a href="/a-propos" style="color:#4b5563;text-decoration:none;">À propos</a></li>
             @auth
@@ -35,7 +46,18 @@
                         @endif
                     </a>
                 </li>
-                <li><a href="/profil" style="color:#4b5563;text-decoration:none;font-weight:600;">{{ auth()->user()->name }}</a></li>
+                <li>
+                    <a href="/profil" style="display:flex;align-items:center;gap:8px;color:#4b5563;text-decoration:none;font-weight:600;">
+                        @if(auth()->user()->avatar)
+                            <img src="{{ asset('storage/' . auth()->user()->avatar) }}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">
+                        @else
+                            <div style="width:28px;height:28px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;">
+                                <span style="color:white;font-size:12px;font-weight:bold;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                            </div>
+                        @endif
+                        {{ auth()->user()->name }}
+                    </a>
+                </li>
             @else
                 <li><a href="/login" style="border:1px solid #2563eb;color:#2563eb;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:600;">Connexion</a></li>
             @endauth
@@ -43,47 +65,23 @@
     </div>
 
     {{-- Menu mobile --}}
-    <div id="mobile-menu" style="display:none;background:white;border-top:1px solid #f3f4f6;padding:12px 16px;">
-        <a href="/" style="display:block;padding:8px 0;color:#4b5563;text-decoration:none;">Accueil</a>
-        <a href="/a-propos" style="display:block;padding:8px 0;color:#4b5563;text-decoration:none;">À propos</a>
+    <div id="nav-mob" style="display:none;background:white;border-top:1px solid #f3f4f6;padding:8px 16px 16px;">
+        <a href="/" style="display:block;padding:10px 0;color:#4b5563;text-decoration:none;border-bottom:1px solid #f9fafb;">Accueil</a>
+        <a href="/a-propos" style="display:block;padding:10px 0;color:#4b5563;text-decoration:none;border-bottom:1px solid #f9fafb;">À propos</a>
         @auth
             @if(auth()->user()->email === env('ADMIN_EMAIL'))
-                <a href="/articles/create" style="display:block;padding:8px 0;color:#2563eb;text-decoration:none;">Écrire un article</a>
+                <a href="/articles/create" style="display:block;padding:10px 0;color:#2563eb;text-decoration:none;font-weight:600;border-bottom:1px solid #f9fafb;">Écrire un article</a>
             @endif
-            <a href="/dashboard" style="display:block;padding:8px 0;color:#4b5563;text-decoration:none;">Dashboard</a>
-            <a href="/notifications" style="display:block;padding:8px 0;color:#4b5563;text-decoration:none;">
+            <a href="/dashboard" style="display:block;padding:10px 0;color:#4b5563;text-decoration:none;border-bottom:1px solid #f9fafb;">Dashboard</a>
+            <a href="/notifications" style="display:block;padding:10px 0;color:#4b5563;text-decoration:none;border-bottom:1px solid #f9fafb;">
                 Notifications
                 @if(auth()->user()->unreadNotifications->count() > 0)
-                    <span style="background:#ef4444;color:white;font-size:10px;font-weight:bold;border-radius:9999px;padding:1px 6px;margin-left:4px;">{{ auth()->user()->unreadNotifications->count() }}</span>
+                    <span style="background:#ef4444;color:white;font-size:10px;font-weight:bold;border-radius:9999px;padding:2px 6px;margin-left:6px;">{{ auth()->user()->unreadNotifications->count() }}</span>
                 @endif
             </a>
-            <a href="/profil" style="display:block;padding:8px 0;color:#374151;text-decoration:none;font-weight:600;">{{ auth()->user()->name }}</a>
+            <a href="/profil" style="display:block;padding:10px 0;color:#374151;text-decoration:none;font-weight:600;">{{ auth()->user()->name }}</a>
         @else
-            <a href="/login" style="display:block;padding:8px 0;color:#2563eb;text-decoration:none;font-weight:600;">Connexion</a>
+            <a href="/login" style="display:block;padding:10px 0;color:#2563eb;text-decoration:none;font-weight:600;">Connexion</a>
         @endauth
     </div>
 </nav>
-
-<script>
-function toggleMenu() {
-    var menu = document.getElementById('mobile-menu');
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-}
-
-// Afficher hamburger sur mobile, cacher desktop menu
-function checkScreen() {
-    var hamburger = document.getElementById('hamburger-btn');
-    var desktopMenu = document.getElementById('desktop-menu');
-    if (window.innerWidth < 768) {
-        hamburger.style.display = 'block';
-        desktopMenu.style.display = 'none';
-    } else {
-        hamburger.style.display = 'none';
-        desktopMenu.style.display = 'flex';
-        document.getElementById('mobile-menu').style.display = 'none';
-    }
-}
-
-checkScreen();
-window.addEventListener('resize', checkScreen);
-</script>

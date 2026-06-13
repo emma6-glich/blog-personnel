@@ -8,39 +8,7 @@
 </head>
 <body class="bg-gray-50 font-sans">
 
-    {{-- NAVBAR --}}
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center max-w-6xl">
-            <a href="/" class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">B</span>
-                </div>
-                <span class="text-xl font-bold text-gray-900">Mon Blog</span>
-            </a>
-            <ul class="flex items-center gap-6 font-medium text-sm">
-                <li><a href="/" class="text-gray-600 hover:text-blue-600 transition">Accueil</a></li>
-                <li><a href="/a-propos" class="text-gray-600 hover:text-blue-600 transition">À propos</a></li>
-                <li><a href="/profil" class="text-gray-600 hover:text-blue-600 transition font-semibold">Mon Profil</a></li>
-                <li>
-                    <a href="/notifications" class="relative text-gray-600 hover:text-blue-600 transition">
-                        🔔
-                        @if(auth()->user()->unreadNotifications->count() > 0)
-                            <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                                {{ auth()->user()->unreadNotifications->count() > 9 ? '9+' : auth()->user()->unreadNotifications->count() }}
-                            </span>
-                        @endif
-                    </a>
-                </li>
-                @if($isAdmin)
-                    <li>
-                        <a href="/articles/create" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold">
-                            ✏️ Écrire
-                        </a>
-                    </li>
-                @endif
-            </ul>
-        </div>
-    </nav>
+    <x-navbar />
 
     <x-flash-messages />
 
