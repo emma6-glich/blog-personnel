@@ -44,21 +44,21 @@
 
     {{-- Mobile --}}
     <div id="navbar-mobile" class="hidden md:hidden bg-white border-t border-gray-100 px-4 py-3 space-y-2 text-sm font-medium">
-        <a href="/" class="block py-2 text-gray-600">Accueil</a>
-        <a href="/a-propos" class="block py-2 text-gray-600">À propos</a>
+        <a href="/" class="block py-2 text-gray-600" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">Accueil</a>
+        <a href="/a-propos" class="block py-2 text-gray-600" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">À propos</a>
         @auth
             @if(auth()->user()->email === env('ADMIN_EMAIL'))
-                <a href="/articles/create" class="block py-2 text-blue-600">Écrire un article</a>
+                <a href="/articles/create" class="block py-2 text-blue-600" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">Écrire un article</a>
             @endif
-            <a href="/dashboard" class="block py-2 text-gray-600">Dashboard</a>
-            <a href="/notifications" class="block py-2 text-gray-600">Notifications
+            <a href="/dashboard" class="block py-2 text-gray-600" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">Dashboard</a>
+            <a href="/notifications" class="block py-2 text-gray-600" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">Notifications
                 @if(auth()->user()->unreadNotifications->count() > 0)
                     <span class="inline-block bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 ml-1">{{ auth()->user()->unreadNotifications->count() }}</span>
                 @endif
             </a>
-            <a href="/profil" class="block py-2 font-semibold text-gray-700">{{ auth()->user()->name }}</a>
+            <a href="/profil" class="block py-2 font-semibold text-gray-700" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">{{ auth()->user()->name }}</a>
         @else
-            <a href="/login" class="block py-2 text-blue-600 font-semibold">Connexion</a>
+            <a href="/login" class="block py-2 text-blue-600 font-semibold" onclick="document.getElementById('navbar-mobile').classList.add('hidden')">Connexion</a>
         @endauth
     </div>
 </nav>

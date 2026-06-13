@@ -29,7 +29,7 @@
 
         {{-- En-tête profil --}}
         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-8">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-6">
                     {{-- Avatar --}}
                     <div class="relative">
@@ -54,13 +54,13 @@
                 </div>
 
                 {{-- Boutons déconnexion et changer de compte --}}
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
                     {{-- Déconnexion --}}
                     <form action="/logout" method="POST">
                         @csrf
                         <button type="submit"
                             class="flex items-center gap-2 bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-red-100 transition cursor-pointer w-full justify-center">
-                            🚪 Déconnexion
+                            Déconnexion
                         </button>
                     </form>
 
@@ -69,7 +69,7 @@
                         @csrf
                         <button type="submit"
                             class="flex items-center gap-2 bg-gray-50 text-gray-600 border border-gray-200 px-4 py-2 rounded-xl font-semibold text-sm hover:bg-gray-100 transition cursor-pointer w-full justify-center">
-                            🔄 Changer de compte
+                            Changer de compte
                         </button>
                     </form>
                 </div>
