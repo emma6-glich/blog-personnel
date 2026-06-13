@@ -50,7 +50,7 @@
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-extrabold text-gray-900">
-                    Bonjour, {{ auth()->user()->name }} 👋
+                    Bonjour, {{ auth()->user()->name }}
                 </h1>
                 <p class="text-gray-500 mt-1 text-sm">
                     {{ $isAdmin ? 'Tableau de bord administrateur' : 'Tableau de bord utilisateur' }}

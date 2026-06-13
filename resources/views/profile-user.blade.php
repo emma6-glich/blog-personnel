@@ -46,9 +46,6 @@
                     <div>
                         <h1 class="text-2xl font-extrabold text-gray-900">{{ $user->name }}</h1>
                         <p class="text-gray-500 text-sm">{{ $user->email }}</p>
-                        @if($user->bio)
-                            <p class="text-gray-600 text-sm mt-2 italic">{{ $user->bio }}</p>
-                        @endif
                         <p class="text-xs text-gray-400 mt-1">Membre depuis {{ $user->created_at->format('d/m/Y') }}</p>
                     </div>
                 </div>
@@ -103,11 +100,7 @@
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Bio <span class="text-gray-400 font-normal">(optionnel)</span></label>
-                        <textarea name="bio" rows="3" maxlength="300" placeholder="Dis quelques mots sur toi..."
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">{{ $user->bio }}</textarea>
-                    </div>
+
 
                     <button type="submit"
                         class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold hover:bg-blue-700 transition">
