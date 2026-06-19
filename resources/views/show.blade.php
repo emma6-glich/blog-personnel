@@ -59,6 +59,64 @@
 
         <div class="mt-12 pt-8 border-t border-gray-200">
 
+            {{-- Sondage --}}
+            <div class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                <h4 class="text-base font-bold text-blue-900 mb-1">Quel sujet souhaitez-vous pour le prochain article ?</h4>
+                <p class="text-xs text-blue-600 mb-4">{{ $totalPollVotes }} vote{{ $totalPollVotes > 1 ? 's' : '' }} au total</p>
+
+                @auth
+                <form action="/articles/{{ $post->slug }}/poll" method="POST" class="space-y-3">
+                    @csrf
+                    @foreach($allCategories as $cat)
+                        @php
+                            $votes = $pollVotes[$cat->id] ?? 0;
+                            $percent = $totalPollVotes > 0 ? round(($votes / $totalPollVotes) * 100) : 0;
+                            $isVoted = $userVote == $cat->id;
+                        @endphp
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="category_id" value="{{ $cat->id }}" {{ $isVoted ? 'checked' : '' }}
+                                class="accent-blue-600 w-4 h-4 cursor-pointer">
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium {{ $isVoted ? 'text-blue-700' : 'text-gray-700' }}">{{ $cat->name }}</span>
+                                    <span class="text-xs text-gray-500">{{ $votes }} vote{{ $votes > 1 ? 's' : '' }} ({{ $percent }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full transition-all" style="width: {{ $percent }}%"></div>
+                                </div>
+                            </div>
+                        </label>
+                    @endforeach
+                    <div class="pt-2">
+                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition cursor-pointer">
+                            {{ $userVote ? 'Changer mon vote' : 'Voter' }}
+                        </button>
+                    </div>
+                </form>
+                @else
+                    <div class="space-y-3">
+                        @foreach($allCategories as $cat)
+                            @php
+                                $votes = $pollVotes[$cat->id] ?? 0;
+                                $percent = $totalPollVotes > 0 ? round(($votes / $totalPollVotes) * 100) : 0;
+                            @endphp
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-medium text-gray-700">{{ $cat->name }}</span>
+                                    <span class="text-xs text-gray-500">{{ $votes }} vote{{ $votes > 1 ? 's' : '' }} ({{ $percent }}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-400 h-2 rounded-full" style="width: {{ $percent }}%"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-blue-700 mt-3">
+                        <a href="/login" class="underline font-semibold">Connectez-vous</a> pour voter.
+                    </p>
+                @endauth
+            </div>
+
             {{-- Réactions --}}
             <div class="mb-8">
                 <h4 class="text-sm font-semibold text-gray-500 uppercase mb-3">Réagir à cet article</h4>

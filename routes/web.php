@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\PollController;
 use Illuminate\Support\Facades\Route;
 
 // ========================================
@@ -50,6 +51,9 @@ Route::post('/articles/{slug}/comments', [CommentController::class, 'store'])->n
 
 // Liker un commentaire
 Route::post('/comments/{id}/like', [CommentLikeController::class, 'toggle'])->name('comments.like')->middleware('auth');
+
+// Sondage
+Route::post('/articles/{slug}/poll', [PollController::class, 'vote'])->name('poll.vote')->middleware('auth');
 
 // Supprimer un commentaire (auteur ou admin)
 Route::delete('/comments/{id}', [CommentController::class, 'destroy'])->name('comments.destroy')->middleware('auth');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Category;
 use App\Models\PostView;
+use App\Models\PollVote;
 use App\Models\User;
 use App\Notifications\NewArticleNotification;
 use App\Notifications\ArticleDeletedNotification;
@@ -129,7 +130,18 @@ class PostController extends Controller
                          ->orderBy('created_at', $sort)
                          ->get();
 
-        return view('show', compact('post', 'comments', 'sort'));
+        // Données du sondage
+        $allCategories = Category::all();
+        $pollVotes = PollVote::where('post_id', $post->id)
+                             ->selectRaw('category_id, count(*) as total')
+                             ->groupBy('category_id')
+                             ->pluck('total', 'category_id');
+        $userVote = auth()->check()
+            ? PollVote::where('post_id', $post->id)->where('user_id', auth()->id())->value('category_id')
+            : null;
+        $totalPollVotes = $pollVotes->sum();
+
+        return view('show', compact('post', 'comments', 'sort', 'allCategories', 'pollVotes', 'userVote', 'totalPollVotes'));
     }
 
     // Afficher le formulaire de modification
