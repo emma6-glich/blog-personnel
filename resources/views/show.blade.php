@@ -234,144 +234,154 @@
             <div class="space-y-6 mb-10">
                 @forelse($comments as $comment)
                     <div class="bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-sm">
-                        {{-- Header commentaire --}}
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-gray-800">{{ $comment->pseudo }}</span>
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs text-gray-400">Le {{ $comment->created_at->format('d/m/Y à H:i') }}</span>
-                                @auth
-                                    @if(auth()->id() === $comment->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
-                                        @if(auth()->id() === $comment->user_id && $comment->created_at->diffInMinutes(now()) <= 10)
-                                            <button onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.toggle('hidden')"
-                                                class="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer">Modifier</button>
-                                        @endif
-                                        <form action="/comments/{{ $comment->id }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">Supprimer</button>
-                                        </form>
-                                    @endif
-                                @endauth
+                        <div class="flex gap-3">
+                            {{-- Avatar --}}
+                            <div style="flex-shrink:0;">
+                                @if($comment->user && $comment->user->avatar)
+                                    <img src="{{ asset('storage/' . $comment->user->avatar) }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">
+                                @else
+                                    <div style="width:38px;height:38px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;">
+                                        <span style="color:#6b7280;font-weight:bold;font-size:16px;">{{ strtoupper(substr($comment->pseudo, 0, 1)) }}</span>
+                                    </div>
+                                @endif
                             </div>
-                        </div>
-
-                        {{-- Contenu --}}
-                        <p class="text-gray-600 text-sm whitespace-pre-line mb-3">{{ $comment->content }}</p>
-
-                        {{-- Like --}}
-                        <div class="flex items-center gap-4 mb-2">
-                            @auth
-                                @php $liked = $comment->likes->where('user_id', auth()->id())->count() > 0; @endphp
-                                <form action="/comments/{{ $comment->id }}/like" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="text-xs flex items-center gap-1 {{ $liked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer transition">
-                                        👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}
-                                    </button>
-                                </form>
-                            @else
-                                <span class="text-xs text-gray-400">👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}</span>
-                            @endauth
-                        </div>
-
-                        {{-- Formulaire modifier --}}
-                        @auth
-                            @if(auth()->id() === $comment->user_id && auth()->user()->email !== env('ADMIN_EMAIL'))
-                                <div id="edit-comment-{{ $comment->id }}" class="hidden mb-4">
-                                    <form action="/comments/{{ $comment->id }}" method="POST">
-                                        @csrf @method('PUT')
-                                        <textarea name="content" rows="3" required
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">{{ $comment->content }}</textarea>
-                                        <div class="flex gap-2 mt-2 justify-end">
-                                            <button type="button" onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.add('hidden')"
-                                                class="text-xs text-gray-500 hover:text-gray-700 cursor-pointer">Annuler</button>
-                                            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-blue-700 cursor-pointer">Sauvegarder</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            @endif
-                        @endauth
-
-                        {{-- Répondre --}}
-                        @auth
-                        <details class="mt-2 text-sm text-gray-500">
-                            <summary class="cursor-pointer text-blue-600 hover:underline font-medium focus:outline-none select-none">
-                                Répondre à ce commentaire
-                            </summary>
-                            <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
-                                @csrf
-                                <input type="hidden" name="parent_id" value="{{ $comment->id }}">
-                                <div class="relative">
-                                    <textarea name="content" rows="2" id="reply-{{ $comment->id }}"
-                                        placeholder="@{{ $comment->pseudo }} " required
-                                        class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none"
-                                        oninput="handleMention(this, 'suggest-{{ $comment->id }}')"></textarea>
-                                    <div id="suggest-{{ $comment->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
-                                </div>
-                                <p class="text-[10px] text-gray-400">Tape @nom pour tagger quelqu'un</p>
-                                <div class="flex justify-end">
-                                    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-blue-700 transition cursor-pointer">Répondre</button>
-                                </div>
-                            </form>
-                        </details>
-                        @endauth
-
-                        {{-- Réponses --}}
-                        @if($comment->replies->count() > 0)
-                            <div class="mt-4 pl-6 border-l-2 border-blue-200 space-y-3">
-                                @foreach($comment->replies as $reply)
-                                    <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-50">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <span class="font-bold text-blue-900 text-xs">
-                                                {{ $reply->pseudo }}
-                                                <span class="bg-blue-200 text-blue-800 text-[10px] px-1.5 py-0.5 rounded ml-1 font-semibold">Réponse</span>
-                                            </span>
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-[10px] text-gray-400">Le {{ $reply->created_at->format('d/m/Y à H:i') }}</span>
-                                                @auth
-                                                    @if(auth()->id() === $reply->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
-                                                        <form action="/comments/{{ $reply->id }}" method="POST" onsubmit="return confirm('Supprimer cette réponse ?')">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" class="text-[10px] text-red-500 hover:text-red-700 font-medium cursor-pointer">Supprimer</button>
-                                                        </form>
-                                                    @endif
-                                                @endauth
-                                            </div>
-                                        </div>
-                                        <p class="text-gray-700 text-xs whitespace-pre-line">{{ $reply->content }}</p>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-gray-800 text-sm">{{ $comment->pseudo }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-gray-400">{{ $comment->created_at->format('d/m/Y à H:i') }}</span>
                                         @auth
-                                            @php $replyLiked = $reply->likes->where('user_id', auth()->id())->count() > 0; @endphp
-                                            <form action="/comments/{{ $reply->id }}/like" method="POST" class="inline mt-1">
-                                                @csrf
-                                                <button type="submit" class="text-[10px] flex items-center gap-1 {{ $replyLiked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer">
-                                                    👍 {{ $reply->likes->count() > 0 ? $reply->likes->count() : '' }}
-                                                </button>
-                                            </form>
-
-                                            {{-- Répondre à une réponse --}}
-                                            <button onclick="document.getElementById('reply-to-reply-{{ $reply->id }}').classList.toggle('hidden')"
-                                                class="text-[10px] text-blue-500 hover:text-blue-700 cursor-pointer ml-2">
-                                                Répondre
-                                            </button>
-                                            <div id="reply-to-reply-{{ $reply->id }}" class="hidden mt-2">
-                                                <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
-                                                    @csrf
-                                                    <input type="hidden" name="parent_id" value="{{ $comment->id }}">
-                                                    <div class="relative">
-                                                        <textarea name="content" rows="2" id="rr-{{ $reply->id }}"
-                                                            placeholder="@{{ $reply->pseudo }} " required
-                                                            class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-[10px] focus:outline-none"
-                                                            oninput="handleMention(this, 'suggest-rr-{{ $reply->id }}')"></textarea>
-                                                        <div id="suggest-rr-{{ $reply->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
-                                                    </div>
-                                                    <div class="flex justify-end">
-                                                        <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-blue-700 cursor-pointer">Envoyer</button>
-                                                    </div>
+                                            @if(auth()->id() === $comment->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
+                                                @if(auth()->id() === $comment->user_id && $comment->created_at->diffInMinutes(now()) <= 10)
+                                                    <button onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.toggle('hidden')"
+                                                        class="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer">Modifier</button>
+                                                @endif
+                                                <form action="/comments/{{ $comment->id }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">Supprimer</button>
                                                 </form>
-                                            </div>
+                                            @endif
                                         @endauth
                                     </div>
-                                @endforeach
-                            </div>
-                        @endif
+                                </div>
+
+                                <p class="text-gray-600 text-sm whitespace-pre-line mb-3">{{ $comment->content }}</p>
+
+                                {{-- Like --}}
+                                <div class="flex items-center gap-4 mb-2">
+                                    @auth
+                                        @php $liked = $comment->likes->where('user_id', auth()->id())->count() > 0; @endphp
+                                        <form action="/comments/{{ $comment->id }}/like" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-xs flex items-center gap-1 {{ $liked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer transition">
+                                                👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-xs text-gray-400">👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}</span>
+                                    @endauth
+                                </div>
+
+                                {{-- Formulaire modifier --}}
+                                @auth
+                                    @if(auth()->id() === $comment->user_id && auth()->user()->email !== env('ADMIN_EMAIL'))
+                                        <div id="edit-comment-{{ $comment->id }}" class="hidden mb-4">
+                                            <form action="/comments/{{ $comment->id }}" method="POST">
+                                                @csrf @method('PUT')
+                                                <textarea name="content" rows="3" required
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">{{ $comment->content }}</textarea>
+                                                <div class="flex gap-2 mt-2 justify-end">
+                                                    <button type="button" onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.add('hidden')"
+                                                        class="text-xs text-gray-500 hover:text-gray-700 cursor-pointer">Annuler</button>
+                                                    <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-blue-700 cursor-pointer">Sauvegarder</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    @endif
+                                @endauth
+
+                                {{-- Répondre --}}
+                                @auth
+                                <details class="mt-2 text-sm text-gray-500">
+                                    <summary class="cursor-pointer text-blue-600 hover:underline font-medium focus:outline-none select-none">
+                                        Répondre à ce commentaire
+                                    </summary>
+                                    <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
+                                        @csrf
+                                        <input type="hidden" name="parent_id" value="{{ $comment->id }}">
+                                        <div class="relative">
+                                            <textarea name="content" rows="2" id="reply-{{ $comment->id }}"
+                                                placeholder="@{{ $comment->pseudo }} " required
+                                                class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-xs focus:outline-none"
+                                                oninput="handleMention(this, 'suggest-{{ $comment->id }}')"></textarea>
+                                            <div id="suggest-{{ $comment->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
+                                        </div>
+                                        <p class="text-[10px] text-gray-400">Tape @nom pour tagger quelqu'un</p>
+                                        <div class="flex justify-end">
+                                            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-blue-700 transition cursor-pointer">Répondre</button>
+                                        </div>
+                                    </form>
+                                </details>
+                                @endauth
+
+                                {{-- Réponses --}}
+                                @if($comment->replies->count() > 0)
+                                    <div class="mt-4 pl-6 border-l-2 border-blue-200 space-y-3">
+                                        @foreach($comment->replies as $reply)
+                                            <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-50">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="font-bold text-blue-900 text-xs">
+                                                        {{ $reply->pseudo }}
+                                                        <span class="bg-blue-200 text-blue-800 text-[10px] px-1.5 py-0.5 rounded ml-1 font-semibold">Réponse</span>
+                                                    </span>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[10px] text-gray-400">Le {{ $reply->created_at->format('d/m/Y à H:i') }}</span>
+                                                        @auth
+                                                            @if(auth()->id() === $reply->user_id || auth()->user()->email === env('ADMIN_EMAIL'))
+                                                                <form action="/comments/{{ $reply->id }}" method="POST" onsubmit="return confirm('Supprimer cette réponse ?')">
+                                                                    @csrf @method('DELETE')
+                                                                    <button type="submit" class="text-[10px] text-red-500 hover:text-red-700 font-medium cursor-pointer">Supprimer</button>
+                                                                </form>
+                                                            @endif
+                                                        @endauth
+                                                    </div>
+                                                </div>
+                                                <p class="text-gray-700 text-xs whitespace-pre-line">{{ $reply->content }}</p>
+                                                @auth
+                                                    @php $replyLiked = $reply->likes->where('user_id', auth()->id())->count() > 0; @endphp
+                                                    <form action="/comments/{{ $reply->id }}/like" method="POST" class="inline mt-1">
+                                                        @csrf
+                                                        <button type="submit" class="text-[10px] flex items-center gap-1 {{ $replyLiked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer">
+                                                            👍 {{ $reply->likes->count() > 0 ? $reply->likes->count() : '' }}
+                                                        </button>
+                                                    </form>
+                                                    <button onclick="document.getElementById('reply-to-reply-{{ $reply->id }}').classList.toggle('hidden')"
+                                                        class="text-[10px] text-blue-500 hover:text-blue-700 cursor-pointer ml-2">
+                                                        Répondre
+                                                    </button>
+                                                    <div id="reply-to-reply-{{ $reply->id }}" class="hidden mt-2">
+                                                        <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
+                                                            @csrf
+                                                            <input type="hidden" name="parent_id" value="{{ $comment->id }}">
+                                                            <div class="relative">
+                                                                <textarea name="content" rows="2" id="rr-{{ $reply->id }}"
+                                                                    placeholder="@{{ $reply->pseudo }} " required
+                                                                    class="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-[10px] focus:outline-none"
+                                                                    oninput="handleMention(this, 'suggest-rr-{{ $reply->id }}')"></textarea>
+                                                                <div id="suggest-rr-{{ $reply->id }}" class="hidden absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg w-full mt-1"></div>
+                                                            </div>
+                                                            <div class="flex justify-end">
+                                                                <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-blue-700 cursor-pointer">Envoyer</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                @endauth
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>{{-- fin flex-1 --}}
+                        </div>{{-- fin flex gap-3 --}}
                     </div>
                 @empty
                     <p class="text-gray-500 italic text-sm">Aucun commentaire pour le moment. Soyez le premier à donner votre avis !</p>
