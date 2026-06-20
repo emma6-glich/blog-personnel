@@ -105,19 +105,23 @@ class PostController extends Controller
 
         $ip = request()->ip();
 
-        // Pour les utilisateurs connectés, on utilise leur ID. Pour les visiteurs, l'IP
+        // Identifiant unique : user_id pour connectés, IP+cookie pour visiteurs
+        if (auth()->check()) {
+            $identifier = 'user_' . auth()->id();
+        } else {
+            // Vérifier si un cookie de visiteur existe
+            $visitorId = request()->cookie('visitor_id');
+            if (!$visitorId) {
+                $visitorId = md5($ip . '_' . uniqid());
+            }
+            $identifier = 'ip_' . $ip . '_' . $visitorId;
+        }
+
         $alreadyViewed = PostView::where('post_id', $post->id)
-                                  ->where(function($q) use ($ip) {
-                                      if (auth()->check()) {
-                                          $q->where('ip_address', 'user_' . auth()->id());
-                                      } else {
-                                          $q->where('ip_address', $ip);
-                                      }
-                                  })
+                                  ->where('ip_address', $identifier)
                                   ->exists();
 
         if (!$alreadyViewed) {
-            $identifier = auth()->check() ? 'user_' . auth()->id() : $ip;
             PostView::create(['post_id' => $post->id, 'ip_address' => $identifier]);
             $post->increment('views');
         }
@@ -141,7 +145,15 @@ class PostController extends Controller
             : null;
         $totalPollVotes = $pollVotes->sum();
 
-        return view('show', compact('post', 'comments', 'sort', 'allCategories', 'pollVotes', 'userVote', 'totalPollVotes'));
+        $response = response()->view('show', compact('post', 'comments', 'sort', 'allCategories', 'pollVotes', 'userVote', 'totalPollVotes'));
+
+        // Poser le cookie visiteur si non connecté
+        if (!auth()->check() && !request()->cookie('visitor_id')) {
+            $visitorId = md5($ip . '_' . uniqid());
+            $response->cookie('visitor_id', $visitorId, 60 * 24 * 365); // 1 an
+        }
+
+        return $response;
     }
 
     // Afficher le formulaire de modification
