@@ -32,9 +32,84 @@
                 <p class="text-xs mt-1 text-gray-400">👁 {{ $post->views }} vue{{ $post->views > 1 ? 's' : '' }}</p>
             </div>
 
-            <div class="text-gray-700 leading-relaxed space-y-6 text-lg whitespace-pre-line">
+            <div class="text-gray-700 leading-relaxed space-y-6 text-lg whitespace-pre-line" id="article-content">
                 {{ $post->content }}
             </div>
+
+            {{-- Lecteur audio --}}
+            <div class="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
+                <span class="text-sm font-semibold text-gray-700">Écouter cet article :</span>
+                <button id="btn-play" onclick="startReading()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition cursor-pointer">
+                    ▶ Lire
+                </button>
+                <button id="btn-pause" onclick="pauseReading()" style="display:none;"
+                    class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-yellow-600 transition cursor-pointer">
+                    ⏸ Pause
+                </button>
+                <button id="btn-resume" onclick="resumeReading()" style="display:none;"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition cursor-pointer">
+                    ▶ Reprendre
+                </button>
+                <button id="btn-stop" onclick="stopReading()" style="display:none;"
+                    class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition cursor-pointer">
+                    ■ Arrêter
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <label class="text-xs text-gray-500">Vitesse :</label>
+                    <select id="speed-select" class="text-xs border border-gray-300 rounded px-2 py-1">
+                        <option value="0.8">Lente</option>
+                        <option value="1" selected>Normale</option>
+                        <option value="1.3">Rapide</option>
+                        <option value="1.6">Très rapide</option>
+                    </select>
+                </div>
+            </div>
+
+            <script>
+            var utterance = null;
+
+            function startReading() {
+                if (!window.speechSynthesis) {
+                    alert("Votre navigateur ne supporte pas la synthèse vocale.");
+                    return;
+                }
+                window.speechSynthesis.cancel();
+                var text = document.getElementById('article-content').innerText;
+                utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR';
+                utterance.rate = parseFloat(document.getElementById('speed-select').value);
+                utterance.onend = function() { resetButtons(); };
+                window.speechSynthesis.speak(utterance);
+                document.getElementById('btn-play').style.display = 'none';
+                document.getElementById('btn-pause').style.display = 'inline-block';
+                document.getElementById('btn-stop').style.display = 'inline-block';
+            }
+
+            function pauseReading() {
+                window.speechSynthesis.pause();
+                document.getElementById('btn-pause').style.display = 'none';
+                document.getElementById('btn-resume').style.display = 'inline-block';
+            }
+
+            function resumeReading() {
+                window.speechSynthesis.resume();
+                document.getElementById('btn-resume').style.display = 'none';
+                document.getElementById('btn-pause').style.display = 'inline-block';
+            }
+
+            function stopReading() {
+                window.speechSynthesis.cancel();
+                resetButtons();
+            }
+
+            function resetButtons() {
+                document.getElementById('btn-play').style.display = 'inline-block';
+                document.getElementById('btn-pause').style.display = 'none';
+                document.getElementById('btn-resume').style.display = 'none';
+                document.getElementById('btn-stop').style.display = 'none';
+            }
+            </script>
 
             @if($post->image)
                 <img src="{{ Str::startsWith($post->image, 'http') ? $post->image : asset('storage/' . $post->image) }}" alt="{{ $post->title }}" class="w-full h-72 object-cover rounded-xl mt-8 border border-gray-200">
