@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $post->title }} - Mon Blog</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
@@ -137,10 +138,10 @@
             {{-- Sondage --}}
             <div class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
                 <h4 class="text-base font-bold text-blue-900 mb-1">Quel sujet souhaitez-vous pour le prochain article ?</h4>
-                <p class="text-xs text-blue-600 mb-4">{{ $totalPollVotes }} vote{{ $totalPollVotes > 1 ? 's' : '' }} au total</p>
+                <p class="text-xs text-blue-600 mb-4" id="poll-total">{{ $totalPollVotes }} vote{{ $totalPollVotes > 1 ? 's' : '' }} au total</p>
 
                 @auth
-                <form action="/articles/{{ $post->slug }}/poll" method="POST" class="space-y-3">
+                <form action="/articles/{{ $post->slug }}/poll" method="POST" class="space-y-3" data-ajax-poll>
                     @csrf
                     @foreach($allCategories as $cat)
                         @php
@@ -154,16 +155,16 @@
                             <div class="flex-1">
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="text-sm font-medium {{ $isVoted ? 'text-blue-700' : 'text-gray-700' }}">{{ $cat->name }}</span>
-                                    <span class="text-xs text-gray-500">{{ $votes }} vote{{ $votes > 1 ? 's' : '' }} ({{ $percent }}%)</span>
+                                    <span class="text-xs text-gray-500" id="poll-count-{{ $cat->id }}">{{ $votes }} vote{{ $votes > 1 ? 's' : '' }} ({{ $percent }}%)</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-500 h-2 rounded-full transition-all" style="width: {{ $percent }}%"></div>
+                                    <div class="bg-blue-500 h-2 rounded-full transition-all" id="poll-bar-{{ $cat->id }}" style="width: {{ $percent }}%"></div>
                                 </div>
                             </div>
                         </label>
                     @endforeach
                     <div class="pt-2">
-                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition cursor-pointer">
+                        <button type="submit" id="poll-submit-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition cursor-pointer">
                             {{ $userVote ? 'Changer mon vote' : 'Voter' }}
                         </button>
                     </div>
@@ -202,11 +203,13 @@
                             $userReacted = auth()->check() && $post->reactions->where('emoji', $emoji)->where('user_id', auth()->id())->count() > 0;
                         @endphp
                         @auth
-                            <form action="/articles/{{ $post->slug }}/reactions" method="POST">
+                            <form action="/articles/{{ $post->slug }}/reactions" method="POST" data-ajax-reaction>
                                 @csrf
                                 <input type="hidden" name="emoji" value="{{ $emoji }}">
-                                <button type="submit" class="flex items-center gap-1 px-4 py-2 rounded-full border text-sm font-medium transition cursor-pointer {{ $userReacted ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50' }}">
-                                    {{ $emoji }} {{ $count > 0 ? $count : '' }}
+                                <button type="submit"
+                                    data-reaction-emoji="{{ $emoji }}"
+                                    class="flex items-center gap-1 px-4 py-2 rounded-full border text-sm font-medium transition cursor-pointer {{ $userReacted ? 'bg-blue-100 border-blue-400 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50' }}">
+                                    {{ $emoji }} <span class="reaction-count">{{ $count > 0 ? $count : '' }}</span>
                                 </button>
                             </form>
                         @else
@@ -220,7 +223,7 @@
 
             {{-- Titre + tri --}}
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-2xl font-bold text-gray-900">Commentaires ({{ $post->comments->count() }})</h3>
+                <h3 class="text-2xl font-bold text-gray-900">Commentaires (<span id="comments-count">{{ $post->comments->count() }}</span>)</h3>
                 <div class="flex gap-2">
                     <a href="?sort=asc" class="text-xs px-3 py-1.5 rounded-full border {{ $sort === 'asc' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50' }}">
                         Plus ancien
@@ -231,9 +234,9 @@
                 </div>
             </div>
 
-            <div class="space-y-6 mb-10">
+            <div class="space-y-6 mb-10" id="comments-container">
                 @forelse($comments as $comment)
-                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-sm">
+                    <div class="bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-sm" id="comment-{{ $comment->id }}">
                         <div class="flex gap-3">
                             {{-- Avatar --}}
                             <div style="flex-shrink:0;">
@@ -256,7 +259,7 @@
                                                     <button onclick="document.getElementById('edit-comment-{{ $comment->id }}').classList.toggle('hidden')"
                                                         class="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer">Modifier</button>
                                                 @endif
-                                                <form action="/comments/{{ $comment->id }}" method="POST" onsubmit="return confirm('Supprimer ce commentaire ?')">
+                                                <form action="/comments/{{ $comment->id }}" method="POST" data-ajax-delete data-comment-id="{{ $comment->id }}">
                                                     @csrf @method('DELETE')
                                                     <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">Supprimer</button>
                                                 </form>
@@ -271,12 +274,11 @@
                                 <div class="flex items-center gap-4 mb-2">
                                     @auth
                                         @php $liked = $comment->likes->where('user_id', auth()->id())->count() > 0; @endphp
-                                        <form action="/comments/{{ $comment->id }}/like" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-xs flex items-center gap-1 {{ $liked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer transition">
-                                                👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                            data-like-comment="{{ $comment->id }}"
+                                            class="text-xs flex items-center gap-1 {{ $liked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer transition">
+                                            👍 <span class="like-count">{{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}</span>
+                                        </button>
                                     @else
                                         <span class="text-xs text-gray-400">👍 {{ $comment->likes->count() > 0 ? $comment->likes->count() : '' }}</span>
                                     @endauth
@@ -306,7 +308,7 @@
                                     <summary class="cursor-pointer text-blue-600 hover:underline font-medium focus:outline-none select-none">
                                         Répondre à ce commentaire
                                     </summary>
-                                    <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner">
+                                    <form action="/articles/{{ $post->slug }}/comments" method="POST" class="mt-3 space-y-3 bg-white p-4 rounded-lg border border-gray-200 shadow-inner" data-ajax-comment>
                                         @csrf
                                         <input type="hidden" name="parent_id" value="{{ $comment->id }}">
                                         <div class="relative">
@@ -326,7 +328,7 @@
 
                                 {{-- Réponses --}}
                                 @if($comment->replies->count() > 0)
-                                    <div class="mt-4 pl-6 border-l-2 border-blue-200 space-y-3">
+                                    <div class="mt-4 pl-6 border-l-2 border-blue-200 space-y-3" id="replies-{{ $comment->id }}">
                                         @foreach($comment->replies as $reply)
                                             <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-50">
                                                 <div class="flex justify-between items-center mb-1">
@@ -349,12 +351,11 @@
                                                 <p class="text-gray-700 text-xs whitespace-pre-line">{{ $reply->content }}</p>
                                                 @auth
                                                     @php $replyLiked = $reply->likes->where('user_id', auth()->id())->count() > 0; @endphp
-                                                    <form action="/comments/{{ $reply->id }}/like" method="POST" class="inline mt-1">
-                                                        @csrf
-                                                        <button type="submit" class="text-[10px] flex items-center gap-1 {{ $replyLiked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer">
-                                                            👍 {{ $reply->likes->count() > 0 ? $reply->likes->count() : '' }}
-                                                        </button>
-                                                    </form>
+                                                    <button type="button"
+                                                        data-like-comment="{{ $reply->id }}"
+                                                        class="text-[10px] flex items-center gap-1 {{ $replyLiked ? 'text-blue-600 font-semibold' : 'text-gray-400 hover:text-blue-500' }} cursor-pointer">
+                                                        👍 <span class="like-count">{{ $reply->likes->count() > 0 ? $reply->likes->count() : '' }}</span>
+                                                    </button>
                                                     <button onclick="document.getElementById('reply-to-reply-{{ $reply->id }}').classList.toggle('hidden')"
                                                         class="text-[10px] text-blue-500 hover:text-blue-700 cursor-pointer ml-2">
                                                         Répondre
@@ -392,7 +393,7 @@
             <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 shadow-inner">
                 @auth
                     <h4 class="text-lg font-semibold text-blue-900 mb-4">Laisser un commentaire</h4>
-                    <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-4">
+                    <form action="/articles/{{ $post->slug }}/comments" method="POST" class="space-y-4" data-ajax-comment>
                         @csrf
                         <div>
                             <label for="content" class="block text-xs font-bold text-blue-900 uppercase mb-1">Votre Commentaire</label>
@@ -422,17 +423,256 @@
     </footer>
 
     <script>
+    // ============================================================
+    // AJAX - Toutes les actions sans recharger la page
+    // ============================================================
+
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content
+              || document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1]
+              || '';
+
+    function ajaxPost(url, data, callback) {
+        const formData = new FormData();
+        for (const [k, v] of Object.entries(data)) formData.append(k, v);
+        formData.append('_token', CSRF);
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(callback)
+        .catch(e => console.error(e));
+    }
+
+    // --- NOUVEAU COMMENTAIRE ---
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.dataset.ajaxComment) return;
+        e.preventDefault();
+
+        const content = form.querySelector('[name="content"]').value.trim();
+        const parentId = form.querySelector('[name="parent_id"]')?.value || '';
+
+        ajaxPost(form.action, { content, parent_id: parentId }, function(res) {
+            if (!res.success) { alert(res.message); return; }
+
+            const c = res.comment;
+            const initial = c.pseudo ? c.pseudo[0].toUpperCase() : '?';
+            const avatarHtml = c.avatar
+                ? `<img src="${c.avatar}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">`
+                : `<div style="width:38px;height:38px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span style="color:#6b7280;font-weight:bold;font-size:16px;">${initial}</span></div>`;
+
+            const html = `
+            <div class="bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-sm" id="comment-${c.id}">
+                <div class="flex gap-3">
+                    <div style="flex-shrink:0;">${avatarHtml}</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-gray-800 text-sm">${c.pseudo}</span>
+                            <span class="text-xs text-gray-400">${c.created_at}</span>
+                        </div>
+                        <p class="text-gray-600 text-sm whitespace-pre-line mb-3">${c.content}</p>
+                        <div class="flex items-center gap-4 mb-2">
+                            <span class="text-xs text-gray-400">👍</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            if (parentId) {
+                // Réponse — l'ajouter dans la section réponses du parent
+                const parentEl = document.getElementById('replies-' + parentId);
+                if (parentEl) {
+                    parentEl.insertAdjacentHTML('beforeend', html.replace('bg-gray-50', 'bg-blue-50/50').replace('border-gray-100', 'border-blue-50'));
+                }
+                // Fermer le details
+                const details = form.closest('details');
+                if (details) details.removeAttribute('open');
+            } else {
+                // Nouveau commentaire principal
+                const container = document.getElementById('comments-container');
+                if (container) container.insertAdjacentHTML('beforeend', html);
+            }
+
+            form.reset();
+
+            // Mettre à jour le compteur
+            const counter = document.getElementById('comments-count');
+            if (counter) counter.textContent = parseInt(counter.textContent) + 1;
+
+            showFlash('Commentaire publié !', 'success');
+        });
+    });
+
+    // --- LIKE COMMENTAIRE ---
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-like-comment]');
+        if (!btn) return;
+        e.preventDefault();
+
+        const commentId = btn.dataset.likeComment;
+        ajaxPost(`/comments/${commentId}/like`, {}, function(res) {
+            if (!res.success) return;
+            btn.querySelector('.like-count').textContent = res.likes_count > 0 ? res.likes_count : '';
+            if (res.liked) {
+                btn.classList.add('text-blue-600', 'font-semibold');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('text-blue-600', 'font-semibold');
+                btn.classList.add('text-gray-400');
+            }
+        });
+    });
+
+    // --- REACTIONS ARTICLE ---
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.dataset.ajaxReaction) return;
+        e.preventDefault();
+
+        const emoji = form.querySelector('[name="emoji"]').value;
+        ajaxPost(form.action, { emoji }, function(res) {
+            if (!res.success) return;
+            // Mettre à jour tous les boutons de réaction
+            for (const [em, data] of Object.entries(res.reactions)) {
+                const btn = document.querySelector(`[data-reaction-emoji="${em}"]`);
+                if (!btn) continue;
+                btn.querySelector('.reaction-count').textContent = data.count > 0 ? data.count : '';
+                if (data.userReacted) {
+                    btn.classList.add('bg-blue-100', 'border-blue-400', 'text-blue-700');
+                    btn.classList.remove('bg-white', 'border-gray-300', 'text-gray-600');
+                } else {
+                    btn.classList.remove('bg-blue-100', 'border-blue-400', 'text-blue-700');
+                    btn.classList.add('bg-white', 'border-gray-300', 'text-gray-600');
+                }
+            }
+        });
+    });
+
+    // --- SUPPRIMER COMMENTAIRE ---
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.dataset.ajaxDelete) return;
+        e.preventDefault();
+
+        if (!confirm('Supprimer ce commentaire ?')) return;
+
+        const commentId = form.dataset.commentId;
+        fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new URLSearchParams({ _token: CSRF, _method: 'DELETE' })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (!res.success) { alert(res.message); return; }
+            const el = document.getElementById('comment-' + commentId);
+            if (el) el.remove();
+            const counter = document.getElementById('comments-count');
+            if (counter) counter.textContent = Math.max(0, parseInt(counter.textContent) - 1);
+            showFlash('Commentaire supprimé.', 'success');
+        });
+    });
+
+    // --- SONDAGE ---
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.dataset.ajaxPoll) return;
+        e.preventDefault();
+
+        const selected = form.querySelector('input[name="category_id"]:checked');
+        if (!selected) return;
+
+        ajaxPost(form.action, { category_id: selected.value }, function(res) {
+            if (!res.success) return;
+            // Mettre à jour les barres
+            for (const [catId, votes] of Object.entries(res.pollVotes)) {
+                const bar = document.getElementById('poll-bar-' + catId);
+                const count = document.getElementById('poll-count-' + catId);
+                const percent = res.totalPollVotes > 0 ? Math.round((votes / res.totalPollVotes) * 100) : 0;
+                if (bar) bar.style.width = percent + '%';
+                if (count) count.textContent = votes + ' vote' + (votes > 1 ? 's' : '') + ' (' + percent + '%)';
+            }
+            document.getElementById('poll-total').textContent = res.totalPollVotes + ' vote' + (res.totalPollVotes > 1 ? 's' : '') + ' au total';
+            document.getElementById('poll-submit-btn').textContent = 'Changer mon vote';
+            showFlash('Vote enregistré !', 'success');
+        });
+    });
+
+    // --- FLASH MESSAGE ---
+    function showFlash(msg, type) {
+        const existing = document.getElementById('ajax-flash');
+        if (existing) existing.remove();
+        const color = type === 'success' ? '#d1fae5' : '#fee2e2';
+        const border = type === 'success' ? '#34d399' : '#f87171';
+        const text   = type === 'success' ? '#065f46' : '#991b1b';
+        const div = document.createElement('div');
+        div.id = 'ajax-flash';
+        div.style.cssText = `position:fixed;top:80px;right:20px;z-index:9999;background:${color};border:1px solid ${border};color:${text};padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.1);`;
+        div.textContent = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    }
+
+    // ============================================================
+    // Lecteur audio
+    // ============================================================
+    var utterance = null;
+
+    function startReading() {
+        if (!window.speechSynthesis) { alert("Votre navigateur ne supporte pas la synthèse vocale."); return; }
+        window.speechSynthesis.cancel();
+        var text = document.getElementById('article-content').innerText;
+        utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = parseFloat(document.getElementById('speed-select').value);
+        utterance.onend = function() { resetButtons(); };
+        window.speechSynthesis.speak(utterance);
+        document.getElementById('btn-play').style.display = 'none';
+        document.getElementById('btn-pause').style.display = 'inline-block';
+        document.getElementById('btn-stop').style.display = 'inline-block';
+    }
+
+    function pauseReading() {
+        window.speechSynthesis.pause();
+        document.getElementById('btn-pause').style.display = 'none';
+        document.getElementById('btn-resume').style.display = 'inline-block';
+    }
+
+    function resumeReading() {
+        window.speechSynthesis.resume();
+        document.getElementById('btn-resume').style.display = 'none';
+        document.getElementById('btn-pause').style.display = 'inline-block';
+    }
+
+    function stopReading() {
+        window.speechSynthesis.cancel();
+        resetButtons();
+    }
+
+    function resetButtons() {
+        document.getElementById('btn-play').style.display = 'inline-block';
+        document.getElementById('btn-pause').style.display = 'none';
+        document.getElementById('btn-resume').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'none';
+    }
+
+    // ============================================================
+    // Autocomplétion @mention
+    // ============================================================
     function handleMention(textarea, suggestId) {
         const value = textarea.value;
         const cursorPos = textarea.selectionStart;
         const textBeforeCursor = value.substring(0, cursorPos);
         const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
         const suggest = document.getElementById(suggestId);
+        if (!suggest) return;
 
         if (mentionMatch) {
             const query = mentionMatch[1];
             if (query.length === 0) { suggest.classList.add('hidden'); return; }
-
             fetch('/api/users/search?q=' + encodeURIComponent(query))
                 .then(r => r.json())
                 .then(users => {

@@ -51,6 +51,23 @@ class ReactionController extends Controller
             }
         }
 
+        if (request()->ajax()) {
+            $post->load('reactions');
+            return response()->json(['success' => true, 'reactions' => $this->getReactionData($post, $userId)]);
+        }
+
         return redirect('/articles/' . $post->slug);
+    }
+
+    private function getReactionData(Post $post, int $userId): array
+    {
+        $reactions = [];
+        foreach (['👍', '❤️', '😂', '😮', '😢'] as $e) {
+            $reactions[$e] = [
+                'count'       => $post->reactions()->where('emoji', $e)->count(),
+                'userReacted' => (bool) $post->reactions()->where('emoji', $e)->where('user_id', $userId)->count(),
+            ];
+        }
+        return $reactions;
     }
 }

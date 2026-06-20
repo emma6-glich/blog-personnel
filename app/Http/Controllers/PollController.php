@@ -42,6 +42,22 @@ class PollController extends Controller
             }
         }
 
+        if (request()->ajax()) {
+            $post->load('reactions');
+            $allCategories = \App\Models\Category::all();
+            $pollVotes = \App\Models\PollVote::where('post_id', $post->id)
+                ->selectRaw('category_id, count(*) as total')
+                ->groupBy('category_id')
+                ->pluck('total', 'category_id');
+            return response()->json([
+                'success'         => true,
+                'message'         => 'Vote enregistré !',
+                'totalPollVotes'  => $pollVotes->sum(),
+                'pollVotes'       => $pollVotes,
+                'userVote'        => $request->category_id,
+            ]);
+        }
+
         return redirect('/articles/' . $post->slug)->with('success', 'Vote enregistré !');
     }
 }
